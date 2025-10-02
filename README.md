@@ -185,3 +185,25 @@ This MCP server is designed for secure data analysis. When contributing:
 ## 📄 License
 
 MIT License - Feel free to use in your projects!
+
+## 🚀 Try it on Aisuru.com
+
+You can experiment with this MCP server directly on **[Aisuru.com](https://aisuru.com)** - our AI agent platform where you can create, test, and deploy intelligent agents with access to powerful tools like this JavaScript executor.
+
+![Aisuru MCP Integration](./assets/aisuru-mcp-dashboard.png)
+
+### 🎯 Perfect for:
+- **Data Analysis**: Process CSV/TSV files with custom JavaScript logic
+- **Agent Development**: Test JavaScript execution capabilities in your AI workflows  
+- **Rapid Prototyping**: Experiment with different data processing approaches
+- **Multi-format Support**: Work seamlessly with JSON, CSV, TSV, and pipe-separated data
+
+Visit [Aisuru.com](https://aisuru.com) to start building with your agents today!
+
+---
+
+## ❤️ Made with Love
+
+**mcp-js-executor** is crafted with love by the [**Memori.ai**](https://memori.ai) team - the creators of [**Aisuru.com**](https://aisuru.com), the platform where you can create and experiment with your AI agents.
+
+**🌟 Join our community and bring your agents to life!**
