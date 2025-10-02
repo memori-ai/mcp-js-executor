@@ -2,11 +2,11 @@
 
 ## 🎯 DESCRIZIONE TOOL
 
-`execute_js` è un tool MCP che esegue codice JavaScript in modo sicuro su dati JSON per analisi e manipolazione dati. Supporta sia espressioni semplici che codice complesso con variabili e funzioni.
+`execute_js` è un tool MCP che esegue codice JavaScript in modo sicuro su dati JSON, CSV e TSV per analisi e manipolazione dati. Supporta sia espressioni semplici che codice complesso con variabili e funzioni.
 
 ## 🔧 MODALITÀ DI INPUT
 
-### Modalità 1: Dati da URL
+### Modalità 1: Dati JSON da URL
 ```javascript
 {
   "url": "https://api.example.com/data.json",
@@ -14,7 +14,15 @@
 }
 ```
 
-### Modalità 2: Dati Inline
+### Modalità 2: Dati CSV/TSV da URL
+```javascript
+{
+  "url": "https://example.com/sales.csv",
+  "code": "data.filter(item => item.amount > 1000).length"
+}
+```
+
+### Modalità 3: Dati Inline (JSON)
 ```javascript
 {
   "data": {
@@ -28,8 +36,8 @@
 ```
 
 ### Priorità Input
-1. Se presente `data` inline → usa quello
-2. Se presente solo `url` → scarica da URL
+1. Se presente `data` inline → usa quello (deve essere JSON)
+2. Se presente solo `url` → scarica e rileva formato automaticamente
 3. Se entrambi → usa `data` inline (ignora URL)
 4. Se nessuno → errore
 
@@ -37,13 +45,120 @@
 
 ```javascript
 {
-  "url": "string (opzionale)",        // URL per dati JSON
+  "url": "string (opzionale)",        // URL per dati JSON/CSV/TSV
   "data": "object (opzionale)",       // Dati JSON inline  
   "code": "string (obbligatorio)"     // Codice JavaScript
 }
 ```
 
 **REGOLA**: Almeno uno tra `url` o `data` deve essere presente.
+
+## 🗂️ SUPPORTO FORMATI
+
+### JSON (.json)
+- Standard supportato dall'inizio
+- Accesso diretto tramite variabile `data`
+
+### CSV (.csv) 
+- Separatore: virgola (`,`)
+- Convertito automaticamente in array di oggetti
+- Headers diventano chiavi degli oggetti
+
+### TSV (.tsv/.txt)
+- Separatore: tab (`\t`)  
+- Convertito automaticamente in array di oggetti
+- Headers diventano chiavi degli oggetti
+
+### Auto-Detection
+- Rileva formato da estensione file (.json, .csv, .tsv)
+- Rileva formato da Content-Type header
+- Fallback: prova JSON, poi CSV/TSV con auto-detect delimiter
+
+## 🚀 ESEMPI PRATICI CON DIVERSI FORMATI
+
+### Esempio 1: Analisi Dataset Vendite TSV
+```javascript
+{
+  "url": "https://example.com/vendite.tsv",
+  "code": `
+    // Il TSV viene convertito automaticamente in array di oggetti
+    const venditeFiltrte = data.filter(v => v['Totale Vendita'] > 1000);
+    const fatturato = venditeFiltrte.reduce((sum, v) => sum + v['Totale Vendita'], 0);
+    
+    return {
+      ordiniAlti: venditeFiltrte.length,
+      fatturatoTotale: fatturato,
+      ticketMedio: fatturato / venditeFiltrte.length
+    };
+  `
+}
+```
+
+### Esempio 2: Analisi per Venditore
+```javascript
+{
+  "url": "https://example.com/vendite.tsv", 
+  "code": `
+    const venditori = {};
+    
+    data.forEach(vendita => {
+      const nome = vendita.Venditore;
+      if (!venditori[nome]) {
+        venditori[nome] = { vendite: 0, fatturato: 0 };
+      }
+      venditori[nome].vendite++;
+      venditori[nome].fatturato += vendita['Totale Vendita'];
+    });
+    
+    const classifica = Object.entries(venditori)
+      .map(([nome, stats]) => ({
+        venditore: nome,
+        vendite: stats.vendite,
+        fatturato: stats.fatturato,
+        ticketMedio: stats.fatturato / stats.vendite
+      }))
+      .sort((a, b) => b.fatturato - a.fatturato);
+    
+    return {
+      topVenditore: classifica[0],
+      classifica: classifica.slice(0, 5)
+    };
+  `
+}
+```
+
+### Esempio 3: Analisi Temporale
+```javascript
+{
+  "url": "https://example.com/vendite.tsv",
+  "code": `
+    const mesi = {};
+    
+    data.forEach(vendita => {
+      const mese = vendita.Mese;
+      if (!mesi[mese]) {
+        mesi[mese] = { ordini: 0, fatturato: 0 };
+      }
+      mesi[mese].ordini++;
+      mesi[mese].fatturato += vendita['Totale Vendita'];
+    });
+    
+    const analisiMensile = Object.entries(mesi)
+      .map(([mese, dati]) => ({
+        mese,
+        ordini: dati.ordini,
+        fatturato: dati.fatturato,
+        ticketMedio: dati.fatturato / dati.ordini
+      }))
+      .sort((a, b) => b.fatturato - a.fatturato);
+    
+    return {
+      miglioreMese: analisiMensile[0],
+      analisiCompleta: analisiMensile
+    };
+  `
+}
+```
 
 ## 🚀 TIPI DI CODICE SUPPORTATI
 

@@ -9,6 +9,70 @@ import {
 import ivm from 'isolated-vm';
 import fetch from 'node-fetch';
 
+// CSV/TSV Parser Function
+function parseCSVToJSON(text, delimiter = ',') {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) {
+    throw new Error('CSV/TSV file must have at least a header row and one data row');
+  }
+  
+  const headers = lines[0].split(delimiter).map(h => h.trim().replace(/"/g, ''));
+  const data = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue; // Skip empty lines
+    
+    const values = line.split(delimiter).map(v => v.trim().replace(/"/g, ''));
+    const row = {};
+    
+    headers.forEach((header, index) => {
+      let value = values[index] || '';
+      
+      // Try to convert to appropriate type
+      if (value === '') {
+        row[header] = null;
+      } else if (!isNaN(value) && !isNaN(parseFloat(value))) {
+        // Check if it's an integer
+        if (value.includes('.') || value.includes(',')) {
+          row[header] = parseFloat(value.replace(',', '.'));
+        } else {
+          row[header] = parseInt(value, 10);
+        }
+      } else if (value.toLowerCase() === 'true') {
+        row[header] = true;
+      } else if (value.toLowerCase() === 'false') {
+        row[header] = false;
+      } else {
+        row[header] = value;
+      }
+    });
+    
+    data.push(row);
+  }
+  
+  return data;
+}
+
+// Smart delimiter detection based on content analysis
+function detectDelimiter(text) {
+  const firstLine = text.split('\n')[0];
+  
+  // Count occurrences of potential delimiters
+  const tabCount = (firstLine.match(/\t/g) || []).length;
+  const commaCount = (firstLine.match(/,/g) || []).length;
+  const semicolonCount = (firstLine.match(/;/g) || []).length;
+  
+  // Choose delimiter with highest count (most likely to be the real delimiter)
+  if (tabCount > commaCount && tabCount > semicolonCount) {
+    return '\t';
+  } else if (semicolonCount > commaCount && semicolonCount > tabCount) {
+    return ';';
+  } else {
+    return ',';
+  }
+}
+
 const server = new Server(
   {
     name: 'mcp-js-executor',
@@ -26,13 +90,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: 'execute_js',
-        description: 'Execute JavaScript code with data from a URL or inline JSON. Supports both expressions and complex statements with variables and return statements. Use "data" variable to access the JSON data. Examples: Simple expression: "data.length", Complex code: "const filtered = data.filter(x => x.value > 10); return filtered.length"',
+        description: 'Execute JavaScript code with data from a URL or inline JSON/CSV/TSV. Supports both expressions and complex statements with variables and return statements. Automatically detects format (JSON, CSV, TSV) from URL or content. Use "data" variable to access the parsed data. Examples: Simple expression: "data.length", Complex code: "const filtered = data.filter(x => x.value > 10); return filtered.length"',
         inputSchema: {
           type: 'object',
           properties: {
             url: {
               type: 'string',
-              description: 'URL to fetch JSON data from (optional if data is provided)',
+              description: 'URL to fetch JSON/CSV/TSV data from (optional if data is provided)',
             },
             data: {
               type: 'object',
@@ -40,7 +104,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             code: {
               type: 'string',
-              description: 'JavaScript code to execute. The variable "data" contains your JSON. Can be a simple expression like "data.length" or complex code with variables and return statements like "const result = data.filter(x => x.id > 5); return result.length"',
+              description: 'JavaScript code to execute. The variable "data" contains your parsed data (JSON array for CSV/TSV). Can be a simple expression like "data.length" or complex code with variables and return statements like "const result = data.filter(x => x.id > 5); return result.length"',
             },
           },
           required: ['code'],
@@ -62,7 +126,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     let data = inlineData;
     if (url && !data) {
       const response = await fetch(url);
-      data = await response.json();
+      const text = await response.text();
+      
+      // Detect format by content analysis (no file extensions!)
+      try {
+        // Try JSON first (retrocompatibility)
+        data = JSON.parse(text);
+      } catch (jsonError) {
+        // If JSON fails, try CSV/TSV based on content analysis
+        try {
+          // Auto-detect delimiter by analyzing content
+          const delimiter = detectDelimiter(text);
+          data = parseCSVToJSON(text, delimiter);
+        } catch (csvError) {
+          // If both fail, throw JSON error for clarity
+          throw new Error(`Unable to parse data. JSON error: ${jsonError.message}. CSV/TSV error: ${csvError.message}`);
+        }
+      }
     }
 
     if (!data) {
