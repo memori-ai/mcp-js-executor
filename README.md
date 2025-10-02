@@ -42,11 +42,67 @@ Jane|25|Boston
 **Note**: The MCP automatically detects the format and delimiter from the content, converting all tabular data into JavaScript arrays of objects.
 
 ## Installation
+
+### NPX (Recommended)
 ```bash
 npx mcp-js-executor
 ```
 
+### Local Installation
+```bash
+npm install -g mcp-js-executor
+mcp-js-executor
+```
+
+## 🔧 Setup with AI Agents
+
+### Claude Desktop
+Add to your `claude_desktop_config.json` file:
+
+```json
+{
+  "mcpServers": {
+    "js-executor": {
+      "command": "npx",
+      "args": ["mcp-js-executor"]
+    }
+  }
+}
+```
+
+**Config file locations:**
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+### Other MCP-Compatible Frameworks
+This server works with any framework that supports the Model Context Protocol (MCP):
+
+- **Cline**: Add to your MCP server configuration
+- **Continue**: Configure in your MCP settings
+- **Custom implementations**: Use standard MCP client libraries
+
+### Local Development
+```bash
+git clone https://github.com/memori-ai/mcp-js-executor.git
+cd mcp-js-executor
+npm install
+npm start
+```
+
 ## 🔧 Usage Examples
+
+### Quick Start with Claude
+Once configured, you can ask Claude to analyze data:
+
+```
+"Analyze this CSV file: https://example.com/sales.csv
+Count how many sales were made in August"
+```
+
+Claude will automatically use the JavaScript executor to:
+1. Fetch and parse the CSV data
+2. Execute JavaScript to filter August sales
+3. Return the count and analysis
 
 ### Simple Data Analysis
 ```javascript
@@ -138,6 +194,28 @@ Jane,25,false
 - **No File System Access**: Cannot read/write local files
 - **No Network Access**: Cannot make external HTTP requests (except for data fetching)
 - **Safe Environment**: No access to Node.js modules or system functions
+
+## ❓ Troubleshooting
+
+### Claude Desktop Not Detecting MCP
+1. Ensure the config file is in the correct location
+2. Restart Claude Desktop completely
+3. Check that the JSON syntax is valid
+4. Verify `npx` is available in your PATH
+
+### Permission Errors
+```bash
+# Fix npm permissions (macOS/Linux)
+sudo npm install -g mcp-js-executor
+
+# Or use npx (recommended)
+npx mcp-js-executor
+```
+
+### Connection Issues
+- Ensure no firewall is blocking the MCP server
+- Check that port 3000 (default) is available
+- Try running the server manually first: `npx mcp-js-executor`
 
 ## 🔧 Technical Details
 
