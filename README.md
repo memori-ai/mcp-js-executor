@@ -190,8 +190,6 @@ MIT License - Feel free to use in your projects!
 
 You can experiment with this MCP server directly on **[Aisuru.com](https://aisuru.com)** - our AI agent platform where you can create, test, and deploy intelligent agents with access to powerful tools like this JavaScript executor.
 
-![Aisuru MCP Integration](./assets/aisuru-mcp-dashboard.png)
-
 ### 🎯 Perfect for:
 - **Data Analysis**: Process CSV/TSV files with custom JavaScript logic
 - **Agent Development**: Test JavaScript execution capabilities in your AI workflows  
