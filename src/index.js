@@ -11,7 +11,17 @@ import fetch from 'node-fetch';
 
 // CSV/TSV Parser Function
 function parseCSVToJSON(text, delimiter = ',') {
-  const lines = text.trim().split('\n');
+  let lines = text.trim().split('\n');
+  
+  // Skip non-data lines (headers, separators, etc.)
+  lines = lines.filter(line => {
+    const trimmed = line.trim();
+    return trimmed && 
+           !trimmed.startsWith('Sheet:') && 
+           !trimmed.match(/^[\-\+\|\s]+$/) && // Skip separator lines like "---+---+---"
+           trimmed.split(delimiter).length > 1; // Must have at least 2 columns
+  });
+  
   if (lines.length < 2) {
     throw new Error('CSV/TSV file must have at least a header row and one data row');
   }
@@ -56,15 +66,27 @@ function parseCSVToJSON(text, delimiter = ',') {
 
 // Smart delimiter detection based on content analysis
 function detectDelimiter(text) {
-  const firstLine = text.split('\n')[0];
+  // Skip header lines like "Sheet: ..."
+  const lines = text.split('\n').filter(line => 
+    !line.trim().startsWith('Sheet:') && 
+    !line.match(/^[\-\+\|\s]+$/) &&
+    line.trim().length > 0
+  );
+  
+  if (lines.length === 0) return ',';
+  
+  const firstDataLine = lines[0];
   
   // Count occurrences of potential delimiters
-  const tabCount = (firstLine.match(/\t/g) || []).length;
-  const commaCount = (firstLine.match(/,/g) || []).length;
-  const semicolonCount = (firstLine.match(/;/g) || []).length;
+  const tabCount = (firstDataLine.match(/\t/g) || []).length;
+  const commaCount = (firstDataLine.match(/,/g) || []).length;
+  const semicolonCount = (firstDataLine.match(/;/g) || []).length;
+  const pipeCount = (firstDataLine.match(/\|/g) || []).length;
   
-  // Choose delimiter with highest count (most likely to be the real delimiter)
-  if (tabCount > commaCount && tabCount > semicolonCount) {
+  // Choose delimiter with highest count
+  if (pipeCount > tabCount && pipeCount > commaCount && pipeCount > semicolonCount) {
+    return '|';
+  } else if (tabCount > commaCount && tabCount > semicolonCount) {
     return '\t';
   } else if (semicolonCount > commaCount && semicolonCount > tabCount) {
     return ';';
