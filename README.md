@@ -129,3 +129,59 @@ Jane,25,false
   {"name": "Jane", "age": 25, "active": false}
 ]
 ```
+
+## 🛡️ Security & Limits
+
+- **Isolated Execution**: Uses `isolated-vm` for complete sandboxing
+- **Memory Limit**: 128MB maximum per execution
+- **Timeout Protection**: 5-second execution limit
+- **No File System Access**: Cannot read/write local files
+- **No Network Access**: Cannot make external HTTP requests (except for data fetching)
+- **Safe Environment**: No access to Node.js modules or system functions
+
+## 🔧 Technical Details
+
+### Supported Delimiters
+- `,` (comma) - Standard CSV
+- `\t` (tab) - TSV files  
+- `;` (semicolon) - European CSV format
+- `|` (pipe) - Custom delimiter format
+
+### Auto-Detection Logic
+1. Analyzes first data line (skipping headers and separators)
+2. Counts occurrence of each delimiter
+3. Selects most frequent delimiter
+4. Falls back to comma if no clear winner
+
+### Data Type Conversion
+- **Numbers**: Automatic conversion for integers and floats
+- **Booleans**: Converts "true"/"false" strings
+- **Null Values**: Empty cells become `null`
+- **Strings**: Everything else remains as string
+
+## 📈 Version History
+
+### v1.1.0 (Current)
+- ✅ Added CSV/TSV/pipe-separated data support
+- ✅ Implemented smart delimiter detection
+- ✅ Enhanced data parsing with type conversion
+- ✅ Improved error handling for malformed data
+- ✅ Maintained full backward compatibility
+
+### v1.0.2
+- ✅ Initial JSON-only support
+- ✅ Basic JavaScript execution
+- ✅ Security isolation with isolated-vm
+
+## 🤝 Contributing
+
+This MCP server is designed for secure data analysis. When contributing:
+
+1. Maintain security isolation
+2. Preserve backward compatibility
+3. Add comprehensive tests for new data formats
+4. Update documentation and examples
+
+## 📄 License
+
+MIT License - Feel free to use in your projects!
